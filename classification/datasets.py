@@ -8,15 +8,15 @@ from torchtext.utils import unicode_csv_reader
 from torchtext.vocab import Vocab
 
 _default_tokenizer = get_tokenizer("basic_english")
-DEFAULT_LABEL_PIPELINE = lambda x: x
-DEFAULT_TEXT_PIPELINE = lambda x: _default_tokenizer(x)
+DEFAULT_LABEL_TRANSFORM = lambda x: x
+DEFAULT_TEXT_TRANSFORM = lambda x: _default_tokenizer(x)
 
 
 def create_torch_dataloader(
     dataset: data.Dataset,
     vocab: Vocab,
-    label_pipeline: Callable = DEFAULT_LABEL_PIPELINE,
-    text_pipeline: Callable = DEFAULT_TEXT_PIPELINE,
+    label_transform: Callable = DEFAULT_LABEL_TRANSFORM,
+    text_transform: Callable = DEFAULT_TEXT_TRANSFORM,
     **kwargs
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -24,9 +24,9 @@ def create_torch_dataloader(
     def _collate_batch(batch):
         label_list, text_list, offsets = [], [], [0]
         for (_label, _text) in batch:
-            label_list.append(label_pipeline(_label))
+            label_list.append(label_transform(_label))
             processed_text = torch.tensor(
-                vocab(text_pipeline(_text)), dtype=torch.int64
+                vocab(text_transform(_text)), dtype=torch.int64
             )
             text_list.append(processed_text)
             offsets.append(processed_text.size(0))
