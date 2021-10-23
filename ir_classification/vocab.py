@@ -37,7 +37,7 @@ def create_vocab_from_tsv(
 
 def _tsv_iterator(data_path, ngrams, column_indices):
     # Spacy has novel tokenizer
-    tokenizer = get_tokenizer("spacy")
+    tokenizer = get_tokenizer("basic_english")
     with io.open(data_path, encoding="utf8") as f:
         reader = unicode_csv_reader(f, delimiter="\t")
         for row in reader:
