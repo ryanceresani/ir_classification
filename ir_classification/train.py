@@ -9,6 +9,13 @@ from sklearn.metrics import precision_recall_fscore_support
 import ipdb
 from torch.utils.tensorboard import SummaryWriter
 
+def predict(model, text):
+    model.eval()
+    no_offset = torch.tensor([0])
+    with torch.no_grad():
+        pred_scores = model(text, no_offset)
+        pred_label = pred_scores.argmax(1).item()
+        return pred_label
 
 def train_epoch(
     epoch_num: int,
@@ -56,7 +63,7 @@ def train_step(
     precision, recall, fscore, support = precision_recall_fscore_support(
         labels.detach().cpu().numpy(),
         predicted_labels,
-        average="weighted",
+        average="macro",
         zero_division=0
     )
 
@@ -105,7 +112,7 @@ def evaluate_step(
         precision, recall, fscore, support = precision_recall_fscore_support(
             labels.detach().cpu().numpy(),
             predicted_labels,
-            average="weighted",
+            average="macro",
             zero_division=0
         )
     results = {
