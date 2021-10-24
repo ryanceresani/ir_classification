@@ -50,7 +50,7 @@ def train_step(
     optimizer: torch.optim.Optimizer,
     loss_function: Callable,
 ) -> Dict[str, float]:
-    labels, text, offsets = batch
+    labels, text, offsets, *_ = batch
 
     optimizer.zero_grad()
     predicted_scores = model(text, offsets)
@@ -109,7 +109,7 @@ def evaluate_step(
     model: nn.Module,
     loss_function: Callable,
 ) -> Dict[str, float]:
-    labels, text, offsets = batch
+    labels, text, offsets, *_ = batch
 
     with torch.no_grad():
         predicted_scores = model(text, offsets)

@@ -39,18 +39,19 @@ def create_torch_dataloader(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def _collate_batch(batch):
-        label_list, text_list, offsets = [], [], [0]
-        for (_label, _text) in batch:
+        label_list, docid_list, text_list, offsets = [], [], [], [0]
+        for (_label, _docid, _text) in batch:
             label_list.append(label_transform(_label))
             processed_text = torch.tensor(
                 vocab(text_transform(_text)), dtype=torch.int64
             )
             text_list.append(processed_text)
             offsets.append(processed_text.size(0))
+            docid_list.append(_docid)
         label_list = torch.tensor(label_list, dtype=torch.int64)
         offsets = torch.tensor(offsets[:-1]).cumsum(dim=0)
         text_list = torch.cat(text_list)
-        return label_list.to(device), text_list.to(device), offsets.to(device)
+        return label_list.to(device), text_list.to(device), offsets.to(device), docid_list
 
     if weighted:
         weights = dataset.weights
@@ -145,7 +146,7 @@ def _create_data_from_tsv(data_path, data_column_indices):
         reader = unicode_csv_reader(f, delimiter="\t")
         for row in reader:
             data = [row[i] for i in data_column_indices]
-            yield int(row[0]), " ".join(data)
+            yield int(row[0]), row[1], " ".join(data)
 
 
 def _get_tsv_file_length(data_path):
