@@ -118,7 +118,7 @@ def evaluate_step(
         accuracy = (predicted_labels == labels).sum().item() / labels.size(0)
         precision, recall, fscore, support = precision_recall_fscore_support(
             labels.detach().cpu().numpy(),
-            predicted_labels,
+            predicted_labels.cpu().numpy(),
             average="macro",
             zero_division=0,
         )
