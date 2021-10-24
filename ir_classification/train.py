@@ -65,7 +65,7 @@ def train_step(
 
     precision, recall, fscore, support = precision_recall_fscore_support(
         labels.detach().cpu().numpy(),
-        predicted_labels,
+        predicted_labels.cpu().numpy(),
         average="macro",
         zero_division=0,
     )
