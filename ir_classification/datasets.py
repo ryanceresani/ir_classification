@@ -18,12 +18,12 @@ def create_torch_dataloader(
     vocab: Vocab,
     label_transform: Callable = DEFAULT_LABEL_TRANSFORM,
     text_transform: Callable = DEFAULT_TEXT_TRANSFORM,
-    weighted = True,
+    weighted=True,
     **kwargs
 ):
     """Creates a Pytorch style dataloader using a dataset and a precompiled vocab.
-    
-    The dataset returns "model-ready" data. 
+
+    The dataset returns "model-ready" data.
 
     Args:
         dataset: The raw text dataset to be used during inference
@@ -32,7 +32,7 @@ def create_torch_dataloader(
         text_transform: operation used on the raw text sentence outputs from the data
         weighted: whether to weight the samples based on class distribution
         **kwargs: any additional kwargs used by Pytorch DataLoaders.
-    
+
     Returns:
         A PyTorch DataLoader to be used during training, eval, or test.
     """
@@ -52,25 +52,31 @@ def create_torch_dataloader(
         text_list = torch.cat(text_list)
         return label_list.to(device), text_list.to(device), offsets.to(device)
 
-    
     if weighted:
         weights = dataset.weights
         sampler = WeightedRandomSampler(weights=weights, num_samples=len(weights))
     else:
         sampler = None
-    
-    return data.DataLoader(dataset, collate_fn=_collate_batch, shuffle=(sampler is None), sampler=sampler, **kwargs)
+
+    return data.DataLoader(
+        dataset,
+        collate_fn=_collate_batch,
+        shuffle=(sampler is None),
+        sampler=sampler,
+        **kwargs
+    )
 
 
 class TSVRawTextIterableDataset(data.IterableDataset):
     """Dataset that loads TSV data incrementally as an iterable and returns raw text.
-    
+
     This dataset must be traversed in order as it only reads from the TSV file as it is called.
     Useful if the size of data is too large to load into memory at once.
     """
+
     def __init__(self, filepath: str, data_columns: List[int]):
         """Loads an iterator from a file.
-        
+
         Args:
             filepath: location of the .tsv file
             data_columns: the columns in the .tsv that are used as feature data
@@ -95,33 +101,35 @@ class TSVRawTextIterableDataset(data.IterableDataset):
 
 class TSVRawTextMapDataset(data.Dataset):
     """Dataset that loads all TSV data into memory and returns raw text.
-    
+
     This dataset provides a map interface, allowing access to any entry.
     Useful for modifying the sampling or order during training.
     """
+
     def __init__(self, filepath: str, data_columns: List[int]):
         """Loads .tsv structed data into memory.
-        
+
         Args:
             filepath: location of the .tsv file
             data_columns: the columns in the .tsv that are used as feature data
         """
-        self._records = list(_create_data_from_tsv(
-                filepath, data_column_indices=data_columns
-            ))
+        self._records = list(
+            _create_data_from_tsv(filepath, data_column_indices=data_columns)
+        )
         self._weights = None
 
     @property
     def weights(self):
         if self._weights is None:
-           self._weights = self._calculate_sample_weights()
+            self._weights = self._calculate_sample_weights()
         return self._weights
 
-
     def _calculate_sample_weights(self):
-        targets = torch.tensor([label if label > 0 else 0 for label, *_ in self._records])
+        targets = torch.tensor(
+            [label if label > 0 else 0 for label, *_ in self._records]
+        )
         unique, sample_counts = torch.unique(targets, return_counts=True)
-        weight = 1. / sample_counts
+        weight = 1.0 / sample_counts
         weights = torch.tensor([weight[t] for t in targets])
         return weights
 
@@ -138,6 +146,7 @@ def _create_data_from_tsv(data_path, data_column_indices):
         for row in reader:
             data = [row[i] for i in data_column_indices]
             yield int(row[0]), " ".join(data)
+
 
 def _get_tsv_file_length(data_path):
     with io.open(data_path, encoding="utf8") as f:
