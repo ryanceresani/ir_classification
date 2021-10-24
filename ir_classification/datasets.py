@@ -30,6 +30,7 @@ def create_torch_dataloader(
         vocab: the premade vocabulary used to index words/phrases
         label_transform: any operation used on the datasets label output
         text_transform: operation used on the raw text sentence outputs from the data
+        weighted: whether to weight the samples based on class distribution
         **kwargs: any additional kwargs used by Pytorch DataLoaders.
     
     Returns:
@@ -112,13 +113,13 @@ class TSVRawTextMapDataset(data.Dataset):
 
     @property
     def weights(self):
-        if not self._weights:
+        if self._weights is None:
            self._weights = self._calculate_sample_weights()
         return self._weights
 
 
     def _calculate_sample_weights(self):
-        targets = [label for label, *_ in self._records]
+        targets = torch.tensor([label if label > 0 else 0 for label, *_ in self._records])
         unique, sample_counts = torch.unique(targets, return_counts=True)
         weight = 1. / sample_counts
         weights = torch.tensor([weight[t] for t in targets])

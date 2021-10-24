@@ -1,0 +1,7 @@
+data:
+  train: ""../datasets/systematic_review/phase1.train.shuf.tsv""
+  val: ""../datasets/systematic_review/phase1.dev.shuf.tsv""
+train:
+  epochs: 10
+  log_interval: 500
+  tensorboard_logging: false
