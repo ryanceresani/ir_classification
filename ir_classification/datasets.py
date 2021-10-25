@@ -54,7 +54,7 @@ def create_torch_dataloader(
         return label_list.to(device), text_list.to(device), offsets.to(device), docid_list
 
     if weighted:
-        weights = dataset.weights
+        weights = dataset.sample_weights
         sampler = WeightedRandomSampler(weights=weights, num_samples=len(weights))
     else:
         sampler = None
@@ -117,22 +117,25 @@ class TSVRawTextMapDataset(data.Dataset):
         self._records = list(
             _create_data_from_tsv(filepath, data_column_indices=data_columns)
         )
-        self._weights = None
+        self._sample_weights, self._class_weights = self._calculate_weights()
 
     @property
-    def weights(self):
-        if self._weights is None:
-            self._weights = self._calculate_sample_weights()
-        return self._weights
+    def sample_weights(self):
+        return self._sample_weights
+    
+    @property
+    def class_weights(self):
+        return self._class_weights
 
-    def _calculate_sample_weights(self):
+    def _calculate_weights(self):
         targets = torch.tensor(
             [label if label > 0 else 0 for label, *_ in self._records]
         )
         unique, sample_counts = torch.unique(targets, return_counts=True)
         weight = 1.0 / sample_counts
-        weights = torch.tensor([weight[t] for t in targets])
-        return weights
+        sample_weights =  torch.tensor([weight[t] for t in targets])
+        class_weights = weight / weight.sum()
+        return sample_weights, class_weights
 
     def __getitem__(self, index):
         return self._records[index]
