@@ -1,5 +1,5 @@
 import io
-from typing import Callable, List
+from typing import Callable, List, Union
 
 import torch
 from torch.utils import data
@@ -7,11 +7,11 @@ from torch.utils.data.sampler import WeightedRandomSampler
 from torchtext.data.utils import get_tokenizer
 from torchtext.utils import unicode_csv_reader
 from torchtext.vocab import Vocab
+from torchtext.vocab.vectors import Vectors
 
 _default_tokenizer = get_tokenizer("basic_english")
 DEFAULT_LABEL_TRANSFORM = lambda x: x
 DEFAULT_TEXT_TRANSFORM = lambda x: _default_tokenizer(x)
-
 
 def create_torch_dataloader(
     dataset: data.Dataset,
