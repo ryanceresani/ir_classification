@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 import torch.nn as nn
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support, average_precision_score
 from torch.utils import data
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -98,10 +98,12 @@ def train_step(
 
     accuracy = (predicted_labels == labels).sum().item() / labels.size(0)
 
+    y_true = labels.detach().cpu().numpy()
+    y_pred = predicted_labels.cpu().numpy()
     precision, recall, fscore, support = precision_recall_fscore_support(
-        labels.detach().cpu().numpy(),
-        predicted_labels.cpu().numpy(),
-        average="macro",
+        y_true,
+        y_pred,
+        average="binary",
         zero_division=0,
     )
 
@@ -174,12 +176,17 @@ def evaluate_step(
         loss = loss_function(predicted_scores, labels)
         predicted_labels = predicted_scores.argmax(1)
         accuracy = (predicted_labels == labels).sum().item() / labels.size(0)
+
+        y_true = labels.detach().cpu().numpy()
+        y_pred = predicted_labels.cpu().numpy()
+
         precision, recall, fscore, support = precision_recall_fscore_support(
-            labels.cpu().numpy(),
-            predicted_labels.cpu().numpy(),
-            average="macro",
+            y_true,
+            y_pred,
+            average="binary",
             zero_division=0,
         )
+        
     results = {
         "loss": loss.detach().cpu().item(),
         "accuracy": accuracy,
