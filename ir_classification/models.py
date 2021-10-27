@@ -34,7 +34,7 @@ class EmbeddingBagMLPModel(nn.Module):
     Handles variable length sentences by using offsets.
     """
 
-    def __init__(self, num_class: int, hidden_layer_size: int = 100, vocab_size: int = 0, embed_dim:int = 64, embedding_vectors: torch.Tensor = None, dropout: float = 0.0):
+    def __init__(self, num_class: int, num_layers: int = 1, hidden_layer_size: int = 100, vocab_size: int = 0, embed_dim:int = 64, embedding_vectors: torch.Tensor = None, dropout: float = 0.0):
         super().__init__()
 
         if embedding_vectors is not None:
@@ -44,11 +44,13 @@ class EmbeddingBagMLPModel(nn.Module):
             self._init_embedding = True
             self.embedding = nn.EmbeddingBag(vocab_size, embed_dim)
 
-        
+        layers = []
+
         self.fc1 = nn.Linear(self.embedding.embedding_dim, hidden_layer_size)
         self.act = nn.GELU()
         self.dropout = nn.Dropout(dropout)
-        self.fc2 = nn.Linear(hidden_layer_size, num_class)
+        self.fc2 = nn.Linear(hidden_layer_size, 32)
+        self.fc3 = nn.Linear(32, num_class)
         self._init_weights()
 
     def forward(self, text, offsets):
@@ -57,12 +59,15 @@ class EmbeddingBagMLPModel(nn.Module):
         x = self.act(x)
         x = self.dropout(x)
         x = self.fc2(x)
+        x = self.act(x)
         x = self.dropout(x)
+        x = self.fc3(x)
         return x
 
     def _init_weights(self):
         torch.nn.init.xavier_uniform_(self.fc1.weight)
         torch.nn.init.xavier_uniform_(self.fc2.weight)
+        torch.nn.init.xavier_uniform_(self.fc3.weight)
 
         if self._init_embedding:
             torch.nn.init.xavier_uniform(self.embedding.weight)
